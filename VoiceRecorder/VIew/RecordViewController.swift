@@ -10,7 +10,7 @@ import UIKit
 import AVFoundation
 import MediaPlayer
 
-class RecordViewController:UIViewController,Recordable{
+class RecordViewController:UIViewController{
     let firebaseManger = FirebaseStorageManager.shared
     let step:Float = 10
     var isPermissionGrant:Bool = false
@@ -18,34 +18,24 @@ class RecordViewController:UIViewController,Recordable{
     
     lazy var recordButton:UIButton = {
         let button = UIButton().playControlButton("circle.fill", state: .normal)
-        button.addTarget(self, action: #selector(didTapRecord(_:)), for: .touchUpInside)
         return button
     }()
     
     lazy var prevButton:UIButton = {
-        let button = UIButton()
-        button.setImage(UIImage(systemName: "gobackward.5"), for: .normal)
-        button.addTarget(self, action: #selector(previusSec), for: .touchUpInside)
+        let button = UIButton().playControlButton("gobackward.5", state: .normal)
         button.isEnabled = false
-        
         return button
     }()
     
     lazy var nextButton:UIButton = {
-        let button = UIButton()
-        button.setImage(UIImage(systemName: "goforward.5"), for: .normal)
-        button.addTarget(self, action: #selector(nextSec), for: .touchUpInside)
+        let button = UIButton().playControlButton("goforward.5", state: .normal)
         button.isEnabled = false
-        
         return button
     }()
     
     lazy var playButton:UIButton = {
-        let button = UIButton()
-        button.setImage(UIImage(systemName: "play.fill"), for: .normal)
-        button.addTarget(self, action: #selector(playPause(_:)), for: .touchUpInside)
+        let button = UIButton().playControlButton("play.fill", state: .normal)
         button.isEnabled = false
-        
         return button
     }()
     
@@ -55,6 +45,64 @@ class RecordViewController:UIViewController,Recordable{
         
         return stackView
     }()
+    
+    lazy var volumeBar:UISlider = {
+        let slider = UISlider()
+        slider.setThumbImage(UIImage(systemName: "circle.fill"), for: .normal)
+        slider.maximumValue = 100
+        slider.minimumValue = 0
+        slider.setValue(50, animated: false)
+        return slider
+    }()
+    
+
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+        configureEngineAndSetup()
+        
+        checkPermission()
+        configure()
+    }
+}
+
+//MARK: - View Configure
+private extension RecordViewController{
+    func configure(){
+        addSubViews()
+        makeConstrains()
+        configureButton()
+    }
+    
+    func addSubViews(){
+        
+        [controlStackView,volumeBar].forEach{
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
+    }
+    
+    func makeConstrains(){
+        NSLayoutConstraint.activate([
+            controlStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            controlStackView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            controlStackView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            controlStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,constant: -50),
+            
+            volumeBar.leadingAnchor.constraint(equalTo: view.leadingAnchor,constant: 30),
+            volumeBar.trailingAnchor.constraint(equalTo: view.trailingAnchor,constant: -30),
+            volumeBar.bottomAnchor.constraint(equalTo: controlStackView.topAnchor,constant: -50),
+        ])
+    }
+    
+    func configureButton(){
+        self.recordButton.addTarget(self, action: #selector(didTapRecord(_:)), for: .touchUpInside)
+        self.prevButton.addTarget(self, action: #selector(previusSec), for: .touchUpInside)
+        self.nextButton.addTarget(self, action: #selector(nextSec), for: .touchUpInside)
+        self.playButton.addTarget(self, action: #selector(playPause(_:)), for: .touchUpInside)
+        self.volumeBar.addTarget(self, action: #selector(touchSlider(_:)), for: .valueChanged)
+    }
     
     @objc func didTapRecord(_ sender:UIButton){
         if isPermissionGrant{
@@ -91,6 +139,7 @@ class RecordViewController:UIViewController,Recordable{
 
         audioEngine.checkEngineRunning()
         audioEngine.skip(forwards: false)
+        self.playButton.setImage(UIImage(systemName: "pause.fill"), for: .normal)
     }
     @objc func nextSec(){
         print("Tapped next")
@@ -119,34 +168,20 @@ class RecordViewController:UIViewController,Recordable{
         }
     }
     
-    lazy var volumeBar:UISlider = {
-        let slider = UISlider()
-        slider.setThumbImage(UIImage(systemName: "circle.fill"), for: .normal)
-        slider.maximumValue = 100
-        slider.minimumValue = 0
-        slider.setValue(50, animated: false)
-        slider.addTarget(self, action: #selector(touchSlider(_:)), for: .valueChanged)
-        return slider
-    }()
-    
     @objc func touchSlider(_ sender:UISlider!){
         guard let audioEngine = audioEngine else {
             return
         }
         audioEngine.player.volume = sender.value
     }
+}
+
+extension RecordViewController:Recordable{
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        
+    func configureEngineAndSetup(){
         configureEngine()
         setup()
-        
-        checkPermission()
-        configure()
     }
-    
     func configureEngine(){
         do{
             try AVAudioSession.sharedInstance().setCategory(.playAndRecord,mode: .default,options: .defaultToSpeaker)
@@ -216,36 +251,6 @@ class RecordViewController:UIViewController,Recordable{
                 print("Could not create file for recording \(error)")
             }
         }
-    }
-    
-}
-
-//MARK: - View Configure
-private extension RecordViewController{
-    func configure(){
-        addSubViews()
-        makeConstrains()
-    }
-    
-    func addSubViews(){
-        
-        [controlStackView,volumeBar].forEach{
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            view.addSubview($0)
-        }
-    }
-    
-    func makeConstrains(){
-        NSLayoutConstraint.activate([
-            controlStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            controlStackView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            controlStackView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            controlStackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,constant: -50),
-            
-            volumeBar.leadingAnchor.constraint(equalTo: view.leadingAnchor,constant: 30),
-            volumeBar.trailingAnchor.constraint(equalTo: view.trailingAnchor,constant: -30),
-            volumeBar.bottomAnchor.constraint(equalTo: controlStackView.topAnchor,constant: -50),
-        ])
     }
 }
 

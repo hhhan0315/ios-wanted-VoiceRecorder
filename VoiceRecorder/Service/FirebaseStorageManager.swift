@@ -8,6 +8,7 @@
 import Foundation
 import FirebaseStorage
 import UIKit
+import AVFAudio
 
 class FirebaseStorageManager {
     static let shared = FirebaseStorageManager()
@@ -27,6 +28,13 @@ class FirebaseStorageManager {
                     result.items.forEach { item in
                         let timeTitle = item.name.replacingOccurrences(of: ".m4a", with: "")
                         let title = "voiceRecords_" + timeTitle
+                        //TODO: - item을 로컬로 다운로드 하고, 캐싱 처리하기
+//                        item.write(toFile: URL(string: title)) { url, error in
+//                            Audio(title: title, url: url)
+//
+//                            AVAudioFile(forReading: url)
+//                        }
+                        
                         item.downloadURL { url, err in
                             if let url = url{
                                 let audio = Audio(title: title, url: url)
