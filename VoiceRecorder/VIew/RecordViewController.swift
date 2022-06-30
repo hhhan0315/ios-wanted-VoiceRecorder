@@ -10,21 +10,14 @@ import UIKit
 import AVFoundation
 import MediaPlayer
 
-class RecordViewController:UIViewController{
+class RecordViewController:UIViewController,Recordable{
     let firebaseManger = FirebaseStorageManager.shared
     let step:Float = 10
-    var recorder:AVAudioRecorder?
-    var audioPlayer:AVAudioPlayer?
-    var player:AVQueuePlayer!
-    var playerLooper:AVPlayerLooper!
     var isPermissionGrant:Bool = false
-    
-    public private(set) var isRecording = false
-    private var audioEngine: AudioEngine!
+    private var audioEngine: Engine?
     
     lazy var recordButton:UIButton = {
-        let button = UIButton()
-        button.setImage(UIImage(systemName: "circle.fill"), for: .normal)
+        let button = UIButton().playControlButton("circle.fill", state: .normal)
         button.addTarget(self, action: #selector(didTapRecord(_:)), for: .touchUpInside)
         return button
     }()
@@ -65,8 +58,12 @@ class RecordViewController:UIViewController{
     
     @objc func didTapRecord(_ sender:UIButton){
         if isPermissionGrant{
+            guard let audioEngine = audioEngine else {
+                return
+            }
+
             audioEngine.checkEngineRunning()
-            audioEngine.toggleRecording()
+            self.toggleRecording()
             
             if audioEngine.isRecording{
                 sender.setImage(UIImage(systemName: "stop.fill"), for: .normal)
@@ -78,7 +75,6 @@ class RecordViewController:UIViewController{
                 playButton.isEnabled = true
                 prevButton.isEnabled = true
                 nextButton.isEnabled = true
-                audioEngine.firebaseUpload()
             }
         }else{
             sender.isEnabled = false
@@ -89,19 +85,29 @@ class RecordViewController:UIViewController{
     }
     @objc func previusSec(){
         print("Tapped prev")
+        guard let audioEngine = audioEngine else {
+            return
+        }
+
         audioEngine.checkEngineRunning()
         audioEngine.skip(forwards: false)
     }
     @objc func nextSec(){
         print("Tapped next")
+        guard let audioEngine = audioEngine else {
+            return
+        }
         audioEngine.checkEngineRunning()
         audioEngine.skip(forwards: true)
     }
     @objc func playPause(_ sender:UIButton){
+        print("tapped play Button")
+        guard let audioEngine = audioEngine else {
+            return
+        }
         audioEngine.checkEngineRunning()
         audioEngine.togglePlaying {
             DispatchQueue.main.async {
-                
                 sender.setImage(UIImage(systemName: "play.fill"), for: .normal)
             }
         }
@@ -124,17 +130,94 @@ class RecordViewController:UIViewController{
     }()
     
     @objc func touchSlider(_ sender:UISlider!){
-        self.player?.volume = sender.value
+        guard let audioEngine = audioEngine else {
+            return
+        }
+        audioEngine.player.volume = sender.value
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         
+        configureEngine()
+        setup()
+        
         checkPermission()
-        setupAudioEngine()
         configure()
     }
+    
+    func configureEngine(){
+        do{
+            try AVAudioSession.sharedInstance().setCategory(.playAndRecord,mode: .default,options: .defaultToSpeaker)
+            self.audioEngine = try Engine(fileURL: URL(fileURLWithPath: "input.caf",
+                                                       isDirectory: false,
+                                                       relativeTo: URL(fileURLWithPath: NSTemporaryDirectory())))
+        } catch {
+            print("Could not configure Engine")
+        }
+    }
+    
+    func setup() {
+        guard let audioEngine = audioEngine else {
+            return
+        }
+        
+        audioEngine.engine.attach(audioEngine.player)
+        let input = audioEngine.engine.inputNode
+        
+        do{
+            try input.setVoiceProcessingEnabled(true)
+        } catch {
+            print("Could not enable voice processing \(error)")
+            return
+        }
+        
+        let output = audioEngine.engine.outputNode
+        let mainMixer = audioEngine.engine.mainMixerNode
+        
+        audioEngine.engine.connect(audioEngine.player, to: mainMixer, format: audioEngine.voiceIOFormat)
+        audioEngine.engine.connect(mainMixer, to: output, format: audioEngine.voiceIOFormat)
+        
+        input.installTap(onBus: 0, bufferSize: 256, format: audioEngine.voiceIOFormat) { buffer, when in
+            if audioEngine.isRecording{
+                print(buffer)
+                do{
+                    try audioEngine.recordFile?.write(from: buffer)
+                } catch {
+                    print("Could not write buffer \(error)")
+                }
+            }
+        }
+        
+        mainMixer.installTap(onBus: 0, bufferSize: 1024, format: nil) { buffer, when in
+            
+        }
+        
+        audioEngine.engine.prepare()
+        audioEngine.engineStart()
+    }
+    
+    func toggleRecording() {
+        guard let audioEngine = audioEngine else {
+            return
+        }
+        if audioEngine.isRecording{
+            audioEngine.isRecording = false
+            audioEngine.recordFile = nil
+        } else {
+            audioEngine.player.stop()
+            
+            do{
+                audioEngine.recordFile = try AVAudioFile(forWriting: audioEngine.fileURL, settings: audioEngine.voiceIOFormat.settings)
+                
+                audioEngine.isRecording = true
+            } catch {
+                print("Could not create file for recording \(error)")
+            }
+        }
+    }
+    
 }
 
 //MARK: - View Configure
@@ -181,41 +264,4 @@ extension RecordViewController{
             fatalError("Error in permission")
         }
     }
-    
-    func setupAudioEngine(){
-        let audioSession = AVAudioSession.sharedInstance()
-        do{
-            audioEngine = try AudioEngine()
-            try audioSession.setCategory(.playAndRecord,options: .defaultToSpeaker)
-            
-            audioEngine.setup()
-            audioEngine.start()
-        } catch {
-            print("Could not setup engine \(error)")
-        }
-    }
 }
-
-extension RecordViewController:AVAudioRecorderDelegate{
-    func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
-        print("Did Record finish \(flag)")
-        if flag{
-            let playItem = AVPlayerItem(url: recorder.url)
-            player = AVQueuePlayer(playerItem: playItem)
-            self.playerLooper = AVPlayerLooper(player: player, templateItem: playItem)
-            firebaseManger.uploadData(url: recorder.url, fileName:"\(Date().convertString()).m4a")
-        }
-    }
-}
-
-
-//MARK: - PREVIEWS
-#if canImport(swiftUI) && DEBUG
-import SwiftUI
-
-struct RecordViewController_Previews:PreviewProvider{
-    static var previews: some View{
-        RecordViewController().showPreview()
-    }
-}
-#endif
