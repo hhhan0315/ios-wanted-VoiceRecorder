@@ -25,9 +25,21 @@ class FirebaseStorageManager {
             storage.child(deviceId).listAll { result in
                 switch result{
                 case .success(let result):
-                    result.items.forEach { item in
-                        let timeTitle = item.name.replacingOccurrences(of: ".m4a", with: "")
-                        let title = "voiceRecords_" + timeTitle
+                    DispatchQueue.main.async {
+                        result.items.forEach { item in
+                            let title = "voiceRecords_" + item.name.replacingOccurrences(of: ".m4a", with: "")
+                            
+                            let fileURL = URL(fileURLWithPath: title, isDirectory: false, relativeTo: URL(fileURLWithPath: NSTemporaryDirectory()))
+                            item.write(toFile: fileURL) { [weak self] url, err in
+                                guard let self = self,
+                                      err == nil else{return}
+                                if let url = url{
+                                    let audio = Audio(title: title, url: url, fileName: item.name)
+                                    completion(.success(audio))
+                                }
+                            }
+                    }
+                    
                         //TODO: - item을 로컬로 다운로드 하고, 캐싱 처리하기
 //                        item.write(toFile: URL(string: title)) { url, error in
 //                            Audio(title: title, url: url)
@@ -35,12 +47,12 @@ class FirebaseStorageManager {
 //                            AVAudioFile(forReading: url)
 //                        }
                         
-                        item.downloadURL { url, err in
-                            if let url = url{
-                                let audio = Audio(title: title, url: url)
-                                completion(.success(audio))
-                            }
-                        }
+//                        item.downloadURL { url, err in
+//                            if let url = url{
+//                                let audio = Audio(title: title, url: url)
+//                                completion(.success(audio))
+//                            }
+//                        }
                     }
                 case .failure(let err):
                     print("Error in fetch FirebaseManager \(err.localizedDescription)")
@@ -52,6 +64,16 @@ class FirebaseStorageManager {
     func uploadData(url:URL,fileName:String){
         if let deviceId = deviceId {
             storage.child("\(deviceId)/\(fileName)").putFile(from: url)
+        }
+    }
+    
+    func deleteData(title:String){
+        if let deviceId = deviceId {
+            storage.child("\(deviceId)/\(title)").delete { err in
+                if err != nil{
+                    print(err?.localizedDescription)
+                }
+            }
         }
     }
 }
