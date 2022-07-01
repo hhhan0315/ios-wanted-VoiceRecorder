@@ -25,6 +25,7 @@ class Engine{
     var isRecording = false
     private var isNewRecordingAvailable = false
     var voiceIOFormat:AVAudioFormat
+    private var displayLink: CADisplayLink?
     
     //Audio Second Change Properties
     private var seekFrame: AVAudioFramePosition = 0
@@ -38,7 +39,6 @@ class Engine{
               let playerTime = player.playerTime(forNodeTime: lastRenderTime) else{
             return 0
         }
-        
         return playerTime.sampleTime
     }
     
@@ -63,6 +63,7 @@ class Engine{
         }
         print("Engine Init")
         self.voiceIOFormat = voiceIOFormat
+        setupDisplayLink()
     }
     
     func engineStart(){
@@ -172,11 +173,18 @@ class Engine{
         }
     }
     
-    func updateDisplay(){
+    func setupDisplayLink(){
+        displayLink = CADisplayLink(target: self, selector: #selector(updateDisplay))
+        displayLink?.add(to: .current, forMode: .default)
+        displayLink?.isPaused = true
+    }
+    
+    @objc func updateDisplay(){
         currentPosition = currentFrame + seekFrame
         currentPosition = max(currentFrame, 0)
         currentPosition = min(currentPosition, audioLengthSamples)
         
+
         if currentPosition >= audioLengthSamples{
             player.stop()
             
@@ -191,5 +199,56 @@ class Engine{
     
     var isPlaying:Bool{
         return player.isPlaying
+    }
+}
+extension Engine{
+    //buffer를 float으로 변환하는 함수
+    //float으로 변환하여 파형으로 전달?
+    func convertData(buffer:AVAudioPCMBuffer){
+        let channelCount = Int(buffer.format.channelCount)
+        let length = vDSP_Length(buffer.frameLength)
+        if let floatData = buffer.floatChannelData{
+            for channel in 0..<channelCount{
+                calculatePowers(data: floatData[channel], strideFrames: buffer.stride, length: length)
+//                print(calculatePowers(data: floatData[channel], strideFrames: buffer.stride, length: length))
+            }
+        } else if let int16Data = buffer.int16ChannelData{
+            for channel in 0..<channelCount{
+                var floatChannelData:[Float] = Array(repeating: Float(0.0), count: Int(buffer.frameLength))
+                vDSP_vflt16(int16Data[channel], buffer.stride, &floatChannelData, buffer.stride, length)
+                var scalar = Float(INT16_MAX)
+                vDSP_vsdiv(floatChannelData, buffer.stride, &scalar, &floatChannelData, buffer.stride, length)
+
+                calculatePowers(data: floatChannelData, strideFrames: buffer.stride, length: length)
+            }
+        } else if let int32Data = buffer.int32ChannelData{
+            for channel in 0..<channelCount {
+                // Convert the data from int32 to float values before calculating the power values.
+                var floatChannelData: [Float] = Array(repeating: Float(0.0), count: Int(buffer.frameLength))
+                vDSP_vflt32(int32Data[channel], buffer.stride, &floatChannelData, buffer.stride, length)
+                var scalar = Float(INT32_MAX)
+                vDSP_vsdiv(floatChannelData, buffer.stride, &scalar, &floatChannelData, buffer.stride, length)
+
+                calculatePowers(data: floatChannelData, strideFrames: buffer.stride, length: length)
+            }
+        }
+    }
+
+    //buffer의 데이터의 상한선과 하한선을 결정한다.
+    private func calculatePowers(data:UnsafePointer<Float>,strideFrames:Int,length:vDSP_Length){
+        var max:Float = 0.0
+        vDSP_maxv(data, strideFrames, &max, length)
+        if max < 0.000_000_01{
+            max = 0.000_000_01
+        }
+
+        var rms:Float = 0.0
+        vDSP_rmsqv(data, strideFrames, &rms, length)
+        if rms < 0.000_000_01{
+            rms = 0.000_000_01
+        }
+
+        print(log10(rms))
+        print(log10(max))
     }
 }

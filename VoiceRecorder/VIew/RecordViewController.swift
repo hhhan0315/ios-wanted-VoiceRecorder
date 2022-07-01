@@ -55,13 +55,10 @@ class RecordViewController:UIViewController{
         return slider
     }()
     
-
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         configureEngineAndSetup()
-        
         checkPermission()
         configure()
     }
@@ -103,7 +100,7 @@ private extension RecordViewController{
         self.playButton.addTarget(self, action: #selector(playPause(_:)), for: .touchUpInside)
         self.volumeBar.addTarget(self, action: #selector(touchSlider(_:)), for: .valueChanged)
     }
-    
+
     @objc func didTapRecord(_ sender:UIButton){
         if isPermissionGrant{
             guard let audioEngine = audioEngine else {
