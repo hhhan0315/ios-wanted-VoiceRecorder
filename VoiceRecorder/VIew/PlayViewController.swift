@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 class PlayViewController: UIViewController {
     
@@ -13,11 +14,12 @@ class PlayViewController: UIViewController {
         didSet {
             titleLabel.text = audio?.title
             guard let url = audio?.url else { return }
-            removeAndMoveAudio(url)
+            downloadAudioAndRemoveAndMoveFile(url)
         }
     }
     
     private var viewModel: PlayViewModel?
+    private var cancellable = Set<AnyCancellable>()
     
     private let titleLabel: UILabel = {
         let label = UILabel()
@@ -122,11 +124,13 @@ class PlayViewController: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-
+        
         viewModel?.allStop()
         viewModel = nil
     }
 }
+
+// MARK: - Private
 
 private extension PlayViewController {
     
@@ -203,13 +207,12 @@ private extension PlayViewController {
         viewModel?.pitchControlValueChanged(Float(value))
     }
     
-    // MARK: - Configure Fuc
+    // MARK: - 기능 구현
     
-    func removeAndMoveAudio(_ url: URL) {
+    func downloadAudioAndRemoveAndMoveFile(_ url: URL) {
         guard let documentURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
             return
         }
-        // safe 찾기
         let fileURL = documentURL.appendingPathComponent("Record.m4a")
         
         URLSession.shared.downloadTask(with: url) { [weak self] localUrl, response, error in
@@ -229,27 +232,30 @@ private extension PlayViewController {
     }
     
     func bind() {
-        viewModel?.playerProgress.observe(on: self) { [weak self] playerProgress in
-            DispatchQueue.main.async {
-                self?.progressView.progress = playerProgress
+        viewModel?.$playerProgress
+            .receive(on: DispatchQueue.main)
+            .sink { value in
+                self.progressView.progress = value
             }
-        }
+            .store(in: &cancellable)
         
-        viewModel?.playerIsPlaying.observe(on: self) { [weak self] isPlaying in
-            DispatchQueue.main.async {
+        viewModel?.$playerIsPlaying
+            .receive(on: DispatchQueue.main)
+            .sink { isPlaying in
                 if isPlaying {
-                    self?.playPauseButton.setImage(UIImage(systemName: "pause.fill"), for: .normal)
+                    self.playPauseButton.setImage(UIImage(systemName: "pause.fill"), for: .normal)
                 } else {
-                    self?.playPauseButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
+                    self.playPauseButton.setImage(UIImage(systemName: "play.fill"), for: .normal)
                 }
             }
-        }
+            .store(in: &cancellable)
         
-        viewModel?.playerTime.observe(on: self) { [weak self] playerTime in
-            DispatchQueue.main.async {
-                self?.playTimeLabel.text = playerTime.elapsedText
-                self?.playTimeRemainLabel.text = playerTime.remainingText
+        viewModel?.$playerTime
+            .receive(on: DispatchQueue.main)
+            .sink { playerTime in
+                self.playTimeLabel.text = playerTime.elapsedText
+                self.playTimeRemainLabel.text = playerTime.remainingText
             }
-        }
+            .store(in: &cancellable)
     }
 }
