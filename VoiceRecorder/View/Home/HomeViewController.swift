@@ -1,14 +1,13 @@
 //
-//  ViewController.swift
+//  HomeViewController.swift
 //  VoiceRecorder
 //
 
 import UIKit
 import AVFAudio
+import Combine
 
 class HomeViewController: UIViewController {
-    private var permission: Bool = false
-    
     private lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
         tableView.tableFooterView = UIView()
@@ -18,21 +17,27 @@ class HomeViewController: UIViewController {
         return tableView
     }()
     
+    private let activityIndicatorView: UIActivityIndicatorView = {
+        let activityIndicatorView = UIActivityIndicatorView()
+        return activityIndicatorView
+    }()
+    
     private let viewModel = HomeViewModel()
+    
+    private var permission: Bool = false
+    
+    private var cancellable = Set<AnyCancellable>()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         checkPermission()
         
         configure()
-        
-        viewModel.loadingEnded = { [weak self] in
-            self?.tableView.reloadData()
-        }
-        
         viewModel.fetch()
     }
 }
+
+// MARK: - Private
 
 private extension HomeViewController {
     func configure() {
@@ -40,6 +45,7 @@ private extension HomeViewController {
         configureNavigation()
         addSubViews()
         makeConstraints()
+        bind()
     }
     
     func configureView() {
@@ -53,16 +59,23 @@ private extension HomeViewController {
     }
     
     func addSubViews() {
-        view.addSubview(tableView)
+        [tableView, activityIndicatorView].forEach {
+            view.addSubview($0)
+        }
     }
     
     func makeConstraints() {
-        tableView.translatesAutoresizingMaskIntoConstraints = false
+        [tableView, activityIndicatorView].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            
+            activityIndicatorView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            activityIndicatorView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
         ])
     }
     
@@ -99,9 +112,30 @@ private extension HomeViewController {
             self.permission = false
         }
     }
+    
+    func bind() {
+        viewModel.$audios
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                self.tableView.reloadData()
+            }
+            .store(in: &cancellable)
+        
+        viewModel.$isReady
+            .receive(on: DispatchQueue.main)
+            .sink { isReady in
+                if isReady {
+                    self.activityIndicatorView.stopAnimating()
+                } else {
+                    self.activityIndicatorView.startAnimating()
+                }
+            }
+            .store(in: &cancellable)
+    }
 }
 
 // MARK: - UITableViewDataSource
+
 extension HomeViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return viewModel.audiosCount()
@@ -112,17 +146,18 @@ extension HomeViewController: UITableViewDataSource {
             return UITableViewCell()
         }
         let audio = viewModel.audio(at: indexPath.row)
-        cell.audio = audio
+        cell.configureAudio(audio)
         return cell
     }
 }
 
 // MARK: - UITableViewDelegate
+
 extension HomeViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let audio = viewModel.audio(at: indexPath.row)
         let playViewController = PlayViewController()
-        playViewController.audio = audio
+        playViewController.configureAudio(audio)
         present(playViewController, animated: true)
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -141,6 +176,7 @@ extension HomeViewController: UITableViewDelegate {
 }
 
 // MARK: - RecordViewControllerDelegate
+
 extension HomeViewController: RecordViewControllerDelegate {
     func recordViewControllerDidDisappear() {
         viewModel.fetch()
