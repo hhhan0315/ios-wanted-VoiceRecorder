@@ -85,7 +85,9 @@ private extension HomeViewController {
             recordController.delegate = self
             present(recordController, animated: true)
         } else {
+            
             // TODO: - 권한 유도 다시 해주기
+            
             AVAudioSession.sharedInstance().requestRecordPermission { isPermission in
                 self.permission = isPermission
             }

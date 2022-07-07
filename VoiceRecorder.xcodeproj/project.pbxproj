@@ -28,6 +28,7 @@
 >>>>>>> main
 		182C8732286AD69700F3C24D /* DateExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 182C8731286AD69700F3C24D /* DateExtensions.swift */; };
 		185AC9742873BE990026E924 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 185AC9732873BE990026E924 /* GoogleService-Info.plist */; };
+		18785C9F2876FAEC00AEDC78 /* RecordingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18785C9E2876FAEC00AEDC78 /* RecordingViewModel.swift */; };
 		18CE51F4286EEA8E004AAF7C /* PlayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18CE51F3286EEA8E004AAF7C /* PlayViewModel.swift */; };
 		18CE51F7286EEEA1004AAF7C /* PlayerTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18CE51F6286EEEA1004AAF7C /* PlayerTime.swift */; };
 		18D1497028697D5700A91B95 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 18D1496F28697D5700A91B95 /* FirebaseAnalytics */; };
@@ -59,6 +60,7 @@
 >>>>>>> main
 		182C8731286AD69700F3C24D /* DateExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateExtensions.swift; sourceTree = "<group>"; };
 		185AC9732873BE990026E924 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		18785C9E2876FAEC00AEDC78 /* RecordingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingViewModel.swift; sourceTree = "<group>"; };
 		18CE51F3286EEA8E004AAF7C /* PlayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayViewModel.swift; sourceTree = "<group>"; };
 		18CE51F6286EEEA1004AAF7C /* PlayerTime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerTime.swift; sourceTree = "<group>"; };
 		18D4A0CD28708EA000839E73 /* RecordViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordViewModel.swift; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 			isa = PBXGroup;
 			children = (
 				18D4A0CD28708EA000839E73 /* RecordViewModel.swift */,
+				18785C9E2876FAEC00AEDC78 /* RecordingViewModel.swift */,
 			);
 			path = Record;
 			sourceTree = "<group>";
@@ -311,6 +314,11 @@
 				0146B7B2286BE38F00DD28D2 /* HomeViewController.swift in Sources */,
 				0146B7A8286BE34700DD28D2 /* AppDelegate.swift in Sources */,
 				0169615D286ACF460020AAAC /* HomeTableViewCell.swift in Sources */,
+<<<<<<< Updated upstream
+=======
+				18785C9F2876FAEC00AEDC78 /* RecordingViewModel.swift in Sources */,
+				017E39B92876CE8600EF3790 /* RecordMeterView.swift in Sources */,
+>>>>>>> Stashed changes
 				0169615F286ACF4B0020AAAC /* HomeViewModel.swift in Sources */,
 				01696161286ADEFA0020AAAC /* PlayViewController.swift in Sources */,
 				18129BC928766FDA006C7F8C /* Constants.swift in Sources */,
