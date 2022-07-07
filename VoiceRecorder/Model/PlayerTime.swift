@@ -15,6 +15,7 @@ struct PlayerTime {
     
     let elapsedText: String
     let remainingText: String
+    static let zero = PlayerTime(elapsedTime: 0, remainingTime: 0)
     
     enum TimeConstant {
         static let secsPerMin = 60

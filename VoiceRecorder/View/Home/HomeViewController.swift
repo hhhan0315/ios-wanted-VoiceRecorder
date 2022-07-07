@@ -24,13 +24,10 @@ class HomeViewController: UIViewController {
     
     private let viewModel = HomeViewModel()
     
-    private var permission: Bool = false
-    
     private var cancellable = Set<AnyCancellable>()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        checkPermission()
         
         configure()
         viewModel.fetch()
@@ -80,7 +77,10 @@ private extension HomeViewController {
     }
     
     @objc func touchAddButton() {
-        if permission {
+        let session = AVAudioSession.sharedInstance()
+        
+        switch session.recordPermission {
+        case .granted:
             let recordController = RecordViewController()
             recordController.delegate = self
             present(recordController, animated: true)
@@ -91,27 +91,13 @@ private extension HomeViewController {
             AVAudioSession.sharedInstance().requestRecordPermission { isPermission in
                 self.permission = isPermission
             }
-            // String
             let alertController = UIAlertController(title: "", message: "설정에서 마이크 권한을 허용해주세요.", preferredStyle: .alert)
             alertController.addAction(UIAlertAction(title: "확인", style: .default, handler: nil))
             present(alertController, animated: true)
-        }
-    }
-    
-    func checkPermission() {
-        let session = AVAudioSession.sharedInstance()
-        
-        switch session.recordPermission {
-        case .granted:
-            self.permission = true
-        case .denied:
-            self.permission = false
         case .undetermined:
-            session.requestRecordPermission { permission in
-                self.permission = permission
+            session.requestRecordPermission { _ in
             }
-        default:
-            self.permission = false
+        default: break
         }
     }
     

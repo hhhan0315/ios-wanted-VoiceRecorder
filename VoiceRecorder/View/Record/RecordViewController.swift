@@ -98,7 +98,7 @@ class RecordViewController:UIViewController {
 //        bindProgress()
         bindIsPlaying()
         bindRecording()
-//        bindTimer()
+        bindTimer()
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -164,7 +164,6 @@ private extension RecordViewController{
         } else {
             viewModel.stopRec()
         }
-    }
 //    @objc func previusSec(){
 //        if viewModel.player.isPlaying {
 //            viewModel.seek(front: false)

@@ -11,7 +11,6 @@ extension DateFormatter {
     func toString(_ date: Date, to format: String = "yyyy_MM_dd_HH:mm:ss") -> String {
         self.dateFormat = format
         self.locale = Locale(identifier: "ko_KR")
-//        return Self.dateFormatter.string(from: date)
         return self.string(from: date)
     }
 }
