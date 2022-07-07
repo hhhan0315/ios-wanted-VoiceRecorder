@@ -139,13 +139,13 @@ private extension RecordViewController{
             
             progressView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor,constant: 30),
             progressView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor,constant: -30),
-            progressView.topAnchor.constraint(equalTo: volumeBar.bottomAnchor,constant: 100),
+            progressView.bottomAnchor.constraint(equalTo: controlStackView.topAnchor,constant: -20),
             
             controlStackView.leadingAnchor.constraint(equalTo: progressView.leadingAnchor),
             controlStackView.trailingAnchor.constraint(equalTo: progressView.trailingAnchor),
-            controlStackView.bottomAnchor.constraint(equalTo: recordButton.topAnchor,constant: -50),
+            controlStackView.bottomAnchor.constraint(equalTo: recordButton.topAnchor,constant: -30),
             
-            recordButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            recordButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor,constant: -10),
             recordButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
         ])
     }
