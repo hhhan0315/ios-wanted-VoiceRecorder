@@ -74,30 +74,37 @@ class RecordViewModel {
     }
     
     func stopRec() {
-        
-        timer.upstream.connect().cancel()        
+        timer.upstream.connect().cancel()
         recorder.stop()
         isRecording = recorder.isRecording
-        print(DateFormatter().toString(Date()))
         storage.uploadData(url: recordFileURL, fileName: DateFormatter().toString(Date()) + ".m4a")
     }
     
-    func playAudio() {
+    func setupAudio() {
         do {
             player = try AVAudioPlayer(data: getDataFrom())
-            player.volume = 0.5
-            player.play()
-            displayLink?.isPaused = false
-            isPlaying = player.isPlaying
+            player.numberOfLoops = 0
         } catch {
             print("Fail to play audio")
         }
     }
     
+    func playAudio() {
+        if player.data == nil {
+            setupAudio()
+        }
+        
+        player.volume = 0.5
+        player.play()
+        displayLink?.isPaused = false
+        isPlaying = player.isPlaying
+    }
+    
+    
     func stopAudio() {
         player.pause()
         isPlaying = false
-        player.currentTime = 0
+        displayLink?.isPaused = true
     }
     
     func getDataFrom() -> Data {
@@ -105,7 +112,6 @@ class RecordViewModel {
             print("Data is Not Unwrapping")
             return Data()
         }
-        print(data.description)
         return data
     }
     
