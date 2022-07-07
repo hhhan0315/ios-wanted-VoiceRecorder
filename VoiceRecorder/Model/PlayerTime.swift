@@ -16,16 +16,12 @@ struct PlayerTime {
     let elapsedText: String
     let remainingText: String
     
-<<<<<<< HEAD:VoiceRecorder/Model/PlayTime.swift
     enum TimeConstant {
         static let secsPerMin = 60
         static let secsPerHour = 3600
     }
     
     static let zero: PlayerTime = PlayerTime.init(elapsedTime: 0, remainingTime: 0)
-    
-=======
->>>>>>> main:VoiceRecorder/Model/PlayerTime.swift
     init(elapsedTime: Double, remainingTime: Double) {
         elapsedText = PlayerTime.formatted(time: elapsedTime)
         remainingText = PlayerTime.formatted(time: remainingTime)

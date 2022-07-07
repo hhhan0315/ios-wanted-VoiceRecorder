@@ -33,12 +33,10 @@ class RecordViewModel {
     @Published var number: Int = 0
     @Published var recordedTime: PlayerTime = .zero
     
-<<<<<<< HEAD
     private var cancellable = Set<AnyCancellable>()
     
-=======
->>>>>>> main
     weak var delegate: RecordDrawDelegate?
+
     
     init() {
         prepareRecorder()
@@ -81,11 +79,7 @@ class RecordViewModel {
         timer.upstream.connect().cancel()
         recorder.stop()
         isRecording = recorder.isRecording
-<<<<<<< HEAD
         storage.uploadData(url: recordFileURL, fileName: DateFormatter().toString(Date()) + ".m4a")
-=======
-        storage.uploadData(url: recordFileURL, fileName: DateFormatter().toString(Date()))
->>>>>>> main
     }
     
     func setupAudio() {
