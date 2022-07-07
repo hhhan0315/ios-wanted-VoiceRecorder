@@ -9,7 +9,7 @@ import Foundation
 
 
 extension DateFormatter {
-    static let dateFormatter:DateFormatter = {
+    static let dateLongFormatter:DateFormatter = {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "ko_KR")
         return dateFormatter
@@ -17,6 +17,7 @@ extension DateFormatter {
     
     func toString(_ date:Date, to format:String = "yyyy_MM_dd_HH:mm:ss") -> String {
         self.dateFormat = format
-        return Self.dateFormatter.string(from: date)
+        return self.string(from: date)
     }
 }
+
