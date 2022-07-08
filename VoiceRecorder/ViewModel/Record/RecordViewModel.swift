@@ -28,8 +28,6 @@ class RecordViewModel {
     
     let timer = Timer.publish(every: 1.0, on: .current, in: .default).autoconnect()
     
-    private var previousFileName = ""
-    
     @Published var progressValue: Float = 0
     @Published var isPlaying: Bool = false
     @Published var isRecording: Bool = false
@@ -39,6 +37,7 @@ class RecordViewModel {
     private var cancellable = Set<AnyCancellable>()
     
     weak var delegate: RecordDrawDelegate?
+
     
     init() {
         prepareRecorder()
@@ -50,8 +49,10 @@ class RecordViewModel {
             try AVAudioSession.sharedInstance().setCategory(.playAndRecord,mode: .default,options: .defaultToSpeaker)
             try AVAudioSession.sharedInstance().setActive(true)
             // TODO: - !
-            recorder = try AVAudioRecorder(url: recordFileURL,settings: recordFormat?.settings ?? [:])
+            recorder = try AVAudioRecorder(url: recordFileURL, format: recordFormat!)
             recorder.prepareToRecord()
+
+            print(recorder.settings)
         } catch {
             print("Error in prepare Recoder")
             print("Could not Prepare Recorder \(error)")

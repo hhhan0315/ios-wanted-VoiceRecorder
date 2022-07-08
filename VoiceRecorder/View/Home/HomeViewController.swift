@@ -89,8 +89,7 @@ private extension HomeViewController {
             alertController.addAction(UIAlertAction(title: "확인", style: .default, handler: nil))
             present(alertController, animated: true)
         case .undetermined:
-            session.requestRecordPermission { _ in
-            }
+            session.requestRecordPermission { _ in }
         default: break
         }
     }
