@@ -91,7 +91,6 @@ class RecordViewController:UIViewController {
         bindRecording()
         bindTimer()
     }
-    
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         print("view did disappear")
